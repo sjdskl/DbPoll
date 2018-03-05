@@ -91,6 +91,7 @@ class DbPoolServer
                 $this->_connections->connections[(int)$nfd] = $nfd;
                 socket_getpeername($nfd, $ip);
                 Log::log( "new client ip:" . $ip);
+                $protocol->initMsg((int)$nfd);
                 $this->_pool->submit(new OnConnect($this->_connections, $nfd, (int)$nfd, ''));
             }
 

@@ -24,11 +24,16 @@ class SqlProtocol
 
     }
 
+    public function initMsg($id)
+    {
+        $this->_msg[$id] = '';
+        $this->_msgQueue[$id] = new \SplQueue();
+    }
+
     public function setMsg($msg, $id) {
         Log::log('设置消息:' . $msg);
         if(!isset($this->_msg[$id])) {
-            $this->_msg[$id] = '';
-            $this->_msgQueue[$id] = new \SplQueue();
+            $this->initMsg($id);
         }
         $this->_msg[$id] .= $msg;
         $t = explode(self::DELIMITER, $this->_msg[$id]);
