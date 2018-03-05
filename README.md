@@ -14,3 +14,11 @@ for($i = 0; $i < 10; $i ++) {
     print_r($res);
 }
 ```
+
+```
+$res = $client->select('bairong', ['id', 'realname', 'phone'], ['id[<=]' => 10])->excute();
+```
+
+
+## TODO
+1.数据库事务
