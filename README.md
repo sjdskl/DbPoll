@@ -19,6 +19,16 @@ for($i = 0; $i < 10; $i ++) {
 $res = $client->select('bairong', ['id', 'realname', 'phone'], ['id[<=]' => 10])->excute();
 ```
 
+4.服务端两行代码搞定
+```$xslt
+$server = new \DbPool\Server\DbPoolServer('127.0.0.1', AF_INET, 1122);
+
+//$server = new \DbPool\Server\DbPoolServer('/tmp/skl.sock', AF_UNIX);
+
+$server->loop();
+```
+
 
 ## TODO
 1.数据库事务
+2.服务端可以自定义事件，onmessage，onconnect，onclose
