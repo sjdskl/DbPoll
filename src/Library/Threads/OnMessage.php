@@ -25,7 +25,7 @@ class OnMessage extends BaseThreaded
 
         $db = $this->worker->getConnection();
 
-        $ret = (array)$this->_msg;
+        $ret = json_decode(json_encode($this->_msg), true);;
         $obj = $db;
         do {
             $method = $ret['method'];

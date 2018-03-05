@@ -12,10 +12,10 @@ for($i = 0; $i < 10; $i ++) {
     $res = $client->query('select * from test.bairong where id=' . ($i + 1) . ' limit 1;')->fetchAll(\PDO::FETCH_ASSOC)->excute();
     print_r($res);
 }
-sleep(10);
+sleep(5);
 
-$client->excute();
-
+$res = $client->select('bairong', ['id', 'realname', 'phone'], ['id[<=]' => 10])->excute();
+print_r($res);
 
 
 
