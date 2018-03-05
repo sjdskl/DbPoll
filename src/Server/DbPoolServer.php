@@ -100,7 +100,7 @@ class DbPoolServer
                     if($rfd === $this->_socket) {
                         continue;
                     }
-                    $f = socket_recv($rfd, $msg, 65535, MSG_DONTWAIT);
+                    $f = @socket_recv($rfd, $msg, 65535, MSG_DONTWAIT);
                     if($f === false || $f === NULL || $f === 0) {
                         $this->_close($rfd);
                         $this->_pool->submit(new OnClose($this->_connections, $rfd, (int)$rfd, ''));
