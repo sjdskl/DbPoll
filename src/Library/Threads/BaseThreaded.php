@@ -59,7 +59,7 @@ class BaseThreaded extends \Threaded
 
     public function __destruct()
     {
-        Log::log("线程关闭");
+        Log::log("[" . $this->worker->getCreatorId() . "]线程关闭");
     }
 
 

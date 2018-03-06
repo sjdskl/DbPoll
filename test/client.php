@@ -17,7 +17,7 @@ include_once '../vendor/autoload.php';
 //exit;
 
 $client = DbPool\Client\DbPoolClient::getInstance('127.0.0.1', AF_INET, 1122);
-for($i = 0; $i < 100; $i ++) {
+for($i = 0; $i < 10; $i ++) {
     $res = $client->query('select * from test.bairong where id=' . ($i + 1) . ' limit 1;')->fetchAll(\PDO::FETCH_ASSOC)->excute();
     print_r($res);
 }
