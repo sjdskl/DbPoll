@@ -12,7 +12,7 @@ class Config
 {
     public static $LogType = 'console';
 
-    public static $PoolSize = 3;
+    public static $PoolSize = 50;
 
     public static $DbPoolSize = 5;
 

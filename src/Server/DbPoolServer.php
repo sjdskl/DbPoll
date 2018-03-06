@@ -18,6 +18,11 @@ use DbPool\Library\Threads\Pool\ThreadsPool;
 use DbPool\Db\DbConnection;
 use DbPool\Library\Protocol\SqlProtocol;
 
+ini_set("memory_limit", '8M');
+//或者执行 export USE_ZEND_ALLOC=0
+//防止gc导致进程挂掉
+gc_disable();
+
 class DbPoolServer
 {
     protected $_socket;
@@ -35,6 +40,8 @@ class DbPoolServer
     protected $_queue;
 
     protected $_db;
+
+    protected $_sqlProtocol;
 
     public function __construct($address, $domain = AF_INET, $port = 1122)
     {
@@ -71,12 +78,13 @@ class DbPoolServer
                 @socket_close($socket);
             });
             Log::log("{$id}连接已断开");
+            $this->_sqlProtocol->remove($id);
         }
     }
 
     public function loop()
     {
-        $protocol = new SqlProtocol();
+        $this->_sqlProtocol = new SqlProtocol();
         while(true) {
             $read = array_merge($this->_connections->toArray(), [$this->_socket]);
             $write = $except = null;
@@ -91,7 +99,7 @@ class DbPoolServer
                 $this->_connections->connections[(int)$nfd] = $nfd;
                 socket_getpeername($nfd, $ip);
                 Log::log( "new client ip:" . $ip);
-                $protocol->initMsg((int)$nfd);
+                $this->_sqlProtocol->initMsg((int)$nfd);
                 $this->_pool->submit(new OnConnect($this->_connections, $nfd, (int)$nfd, ''));
             }
 
@@ -101,20 +109,29 @@ class DbPoolServer
                         continue;
                     }
                     $f = @socket_recv($rfd, $msg, 65535, MSG_DONTWAIT);
+                    Log::log("内存占用:" . floor(memory_get_usage() / 1024 /1024) . "M");
                     if($f === false || $f === NULL || $f === 0) {
                         $this->_close($rfd);
                         $this->_pool->submit(new OnClose($this->_connections, $rfd, (int)$rfd, ''));
                         continue;
                     }
                     if($msg) {
-                        $protocol->setMsg($msg, (int)$rfd);
-                        $row = $protocol->get((int)$rfd);
-                        $this->_pool->submit(new OnMessage($this->_connections, $rfd, (int)$rfd, $row));
+                        $this->_sqlProtocol->setMsg($msg, (int)$rfd);
+                        Log::log("消息队列数量:" . $this->_sqlProtocol->count((int)$rfd));
+                        //一次都推送过去
+                        for($i = 0; $i < $this->_sqlProtocol->count((int)$rfd); $i ++) {
+                            $row = $this->_sqlProtocol->get((int)$rfd);
+                            $this->_pool->submit(new OnMessage($this->_connections, $rfd, (int)$rfd, $row));
+                        }
                     }
                 }
             }
 
+            while ($this->_pool->collect());
+
         }
+
+        $this->_pool->shutdown();
     }
 
 }

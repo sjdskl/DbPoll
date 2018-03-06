@@ -68,6 +68,12 @@ class SqlProtocol
         return $this->_msgQueue[$id]->count();
     }
 
+    public function remove($id)
+    {
+        unset($this->_msgQueue[$id]);
+        unset($this->_msg[$id]);
+    }
+
     protected function _analysis($msg)
     {
         $json = json_decode($msg, true);

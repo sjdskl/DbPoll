@@ -30,7 +30,10 @@ class BaseThreaded extends \Threaded
         if(!is_string($msg) || !is_integer($msg)) {
             $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
         }
-
+        if(!isset($this->_connections->connections[$this->_id])) {
+            Log::log("socket={$this->_id}已经被关闭");
+            return false;
+        }
         $f = @socket_write($this->_socket, $msg, strlen($msg));
         if($f === false || $f === NULL) {
             Log::log("Thread:[{$this->_id}]发送消息时连接已经断开");
@@ -42,12 +45,21 @@ class BaseThreaded extends \Threaded
             //同步代码
             $this->_connections->synchronized(function () {
                 Log::log("[{$this->_id}]执行同步代码，关闭连接");
-                unset($this->_connections->connections[$this->_id]);
+                if(isset($this->_connections->connections[$this->_id])) {
+                    unset($this->_connections->connections[$this->_id]);
+                } else {
+                    Log::log("socket={$this->_id}已经被关闭");
+                }
                 @socket_close($this->_socket);
             });
         }
 
         return $f;
+    }
+
+    public function __destruct()
+    {
+        Log::log("线程关闭");
     }
 
 
