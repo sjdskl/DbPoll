@@ -9,6 +9,7 @@
 namespace DbPool\Library\Threads;
 use DbPool\Server\Connections;
 use DbPool\Library\Log;
+use DbPool\Config;
 
 class BaseThreaded extends \Threaded
 {
@@ -25,11 +26,13 @@ class BaseThreaded extends \Threaded
         $this->_msg = $msg;
     }
 
-    public function sendMsg($msg)
+    public function sendMsg($msg, $code = Config::SUCCESS_CODE)
     {
-        if(!is_string($msg) || !is_integer($msg)) {
-            $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
-        }
+        $msg = [
+            'msg' => $msg,
+            'code' => $code,
+        ];
+        $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
         if(!isset($this->_connections->connections[$this->_id])) {
             Log::log("socket={$this->_id}已经被关闭");
             return false;
@@ -55,6 +58,11 @@ class BaseThreaded extends \Threaded
         }
 
         return $f;
+    }
+
+    public function sendDbConnectionError($msg)
+    {
+        $this->sendMsg($msg, Config::ERROR_CODE);
     }
 
     public function __destruct()

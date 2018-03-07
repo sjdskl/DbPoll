@@ -24,6 +24,10 @@ class OnMessage extends BaseThreaded
         }
 
         $db = $this->worker->getConnection();
+        if(!$db) {
+            $this->sendDbConnectionError($this->worker->getLastError());
+            return;
+        }
 
         $ret = json_decode(json_encode($this->_msg), true);;
         $obj = $db;

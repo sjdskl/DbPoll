@@ -10,5 +10,12 @@ namespace DbPool\Library\Threads\Pool;
 
 class ThreadsPool extends \Pool
 {
+    public function workerCount()
+    {
+        if($this->workers) {
+            return count($this->workers);
+        }
 
+        return 0;
+    }
 }

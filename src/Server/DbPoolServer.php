@@ -18,7 +18,7 @@ use DbPool\Library\Threads\Pool\ThreadsPool;
 use DbPool\Db\DbConnection;
 use DbPool\Library\Protocol\SqlProtocol;
 
-ini_set("memory_limit", '8M');
+ini_set("memory_limit", '128M');
 //或者执行 export USE_ZEND_ALLOC=0
 //防止gc导致进程挂掉
 gc_disable();
@@ -35,6 +35,8 @@ class DbPoolServer
 
     protected $_pool;
 
+    protected $_transPool;
+
     protected $_used_connections;
 
     protected $_queue;
@@ -42,6 +44,8 @@ class DbPoolServer
     protected $_db;
 
     protected $_sqlProtocol;
+
+    protected $_threadQueueManager;
 
     public function __construct($address, $domain = AF_INET, $port = 1122)
     {
@@ -66,6 +70,9 @@ class DbPoolServer
         $this->_db = new DbConnection(Config::$DbInfo);
         $this->_connections = new Connections();
         $this->_pool = new ThreadsPool(Config::$PoolSize, '\DbPool\Library\Threads\ThreadWorker');
+        $this->_transPool = new ThreadsPool(Config::$TransPoolSize, '\DbPool\Library\Threads\ThreadWorker');
+        Log::log("worker队列数量:" .$this->_transPool->workerCount());
+        $this->_threadQueueManager = new TransPoolManager(Config::$TransPoolSize);
     }
 
     protected function _close($socket)
@@ -79,6 +86,35 @@ class DbPoolServer
             });
             Log::log("{$id}连接已断开");
             $this->_sqlProtocol->remove($id);
+        }
+    }
+
+    protected function submitToThreadPool($obj, $socket, $trans = false, $step = '')
+    {
+        //事务独占一个work
+        if($trans) {
+            //同步执行代码
+            $this->_threadQueueManager->synchronized(function() use ($obj, $socket, $step) {
+                $idx = $this->_threadQueueManager->poop($socket);
+                Log::log("分配到[$idx]编号worker");
+                if(!$idx) {
+                    //TODO 当连接池用完时的处理
+                }
+                if($step == Config::$TransStart) {
+                    if(!$this->_threadQueueManager->isInited($idx)) {
+                        $this->_transPool->submit($obj);
+                        $this->_threadQueueManager->inited($idx);
+                    } else {
+                        $this->_transPool->submitTo($idx, $obj);
+                    }
+                } else if($step == Config::$TransEnd) {
+                    $this->_transPool->submitTo($idx, $obj);
+                    $this->_threadQueueManager->push($socket);
+                    Log::log("将连接放回连接池:" . $idx);
+                }
+            });
+        } else {
+            $this->_pool->submit($obj);
         }
     }
 
@@ -100,7 +136,8 @@ class DbPoolServer
                 socket_getpeername($nfd, $ip);
                 Log::log( "new client ip:" . $ip);
                 $this->_sqlProtocol->initMsg((int)$nfd);
-                $this->_pool->submit(new OnConnect($this->_connections, $nfd, (int)$nfd, ''));
+                $this->submitToThreadPool(new OnConnect($this->_connections, $nfd, (int)$nfd, ''), $nfd);
+//                $this->_pool->submit(new OnConnect($this->_connections, $nfd, (int)$nfd, ''));
             }
 
             if($read) {
@@ -112,7 +149,8 @@ class DbPoolServer
                     Log::log("内存占用:" . floor(memory_get_usage() / 1024 /1024) . "M");
                     if($f === false || $f === NULL || $f === 0) {
                         $this->_close($rfd);
-                        $this->_pool->submit(new OnClose($this->_connections, $rfd, (int)$rfd, ''));
+                        $this->submitToThreadPool(new OnClose($this->_connections, $rfd, (int)$rfd, ''), $rfd);
+//                        $this->_pool->submit(new OnClose($this->_connections, $rfd, (int)$rfd, ''));
                         continue;
                     }
                     if($msg) {
@@ -121,7 +159,12 @@ class DbPoolServer
                         //一次都推送过去
                         for($i = 0; $i < $this->_sqlProtocol->count((int)$rfd); $i ++) {
                             $row = $this->_sqlProtocol->get((int)$rfd);
-                            $this->_pool->submit(new OnMessage($this->_connections, $rfd, (int)$rfd, $row));
+                            $trans = false;
+                            if($row['trans'])  {
+                                $trans = true;
+                            }
+                            $this->submitToThreadPool(new OnMessage($this->_connections, $rfd, (int)$rfd, $row), $rfd, $trans, $row['trans']);
+//                            $this->_pool->submit(new OnMessage($this->_connections, $rfd, (int)$rfd, $row));
                         }
                     }
                 }

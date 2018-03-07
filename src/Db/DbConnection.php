@@ -46,6 +46,12 @@ class DbConnection
 
     public function __call($name, $arguments)
     {
-        return $this->_connection->$name(...$arguments);
+        //方法不存在则尝试调用本类方法
+        if(!method_exists($this->_connection, $name)) {
+            return $this->$name();
+        } else {
+            return $this->_connection->$name(...$arguments);
+        }
+
     }
 }

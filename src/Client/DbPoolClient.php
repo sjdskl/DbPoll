@@ -9,6 +9,7 @@ namespace DbPool\Client;
 
 use DbPool\Library\Log;
 use DbPool\Exception\ParamsErrorException;
+use DbPool\Config;
 
 class DbPoolClient
 {
@@ -19,6 +20,10 @@ class DbPoolClient
     private $_stack;
 
     private $_deepest_stack;
+
+    private $_err;
+
+    private $_trans = '';
 
     const DELIMITER = '\r\n\r\n';
 
@@ -68,7 +73,22 @@ class DbPoolClient
             Log::log('发送失败:' . socket_strerror(socket_last_error($this->_socket)));
         }
         $data = socket_read($this->_socket, 65535);
-        return json_decode($data, true);
+        $data = json_decode($data, true);
+        if($data) {
+            if($data['code'] != Config::SUCCESS_CODE) {
+                $this->_err = $data['msg'];
+                return false;
+            } else {
+                return $data['msg'];
+            }
+        } else {
+            return false;
+        }
+    }
+
+    public function getLastError()
+    {
+        return $this->_err;
     }
 
     public function __call($name, $arguments)
@@ -76,6 +96,7 @@ class DbPoolClient
         $stack['method'] = $name;
         $stack['params'] = $arguments;
         $stack['results'] = '';
+        $stack['trans'] = $this->_trans;
         if(!$this->_stack) {
             $this->_stack = $stack;
             $this->_deepest_stack = &$this->_stack;
@@ -87,9 +108,48 @@ class DbPoolClient
         return $this;
     }
 
+    protected function beginTrans()
+    {
+        $this->_trans = Config::$TransStart;
+        $this->getPdo()->beginTransaction()->excute();
+    }
+
+    protected function endTrans()
+    {
+        $this->_trans = Config::$TransEnd;
+        $this->getPdo()->commit()->excute();
+    }
+
+    protected function roll()
+    {
+        $this->_trans = Config::$TransEnd;
+        $this->getPdo()->rollBack()->excute();
+    }
+
+    public function action(callable $function, $params = [])
+    {
+        try {
+            $this->beginTrans();
+            $f = $function(...$params);
+            if(!$f) {
+                $this->roll();
+            } else {
+                $this->endTrans();
+            }
+        } catch (\Exception $e) {
+            $this->roll();
+        }
+        $this->_trans = '';
+    }
+
     public function __destruct()
     {
         @socket_close($this->_socket);
+    }
+
+    protected function _getProtocol($name, $arguments, $transStep = null)
+    {
+
     }
 
 }

@@ -10,11 +10,19 @@ namespace DbPool;
 
 class Config
 {
+    const SUCCESS_CODE = 1000;
+
+    const ERROR_CODE = 2001;
+
     public static $LogType = 'console';
 
-    public static $PoolSize = 50;
+    public static $PoolSize = 5;
 
-    public static $DbPoolSize = 5;
+    public static $TransPoolSize = 5;
+
+    public static $TransStart = 1;
+
+    public static $TransEnd = 2;
 
     public static $DbInfo = [
         'dbname' => 'test',

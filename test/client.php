@@ -7,7 +7,19 @@
  */
 include_once '../vendor/autoload.php';
 
+//$pool1 = new \Pool(5);
+//$pool = new \Pool(5);
+//
+//for($i = 0; $i < 5; $i ++) {
+//    //用空线程方法来初始化事务线程池，pool对象自己不会初始化
+//    $pool->submit(new \Threaded());
+//}
+//
+//$pool->submitTo(0, new \Threaded());exit;
+
 //$a = new SplQueue();
+//$a->shift();
+
 //$a->push(1);
 //$a->push(2);
 //$a->push(3);
@@ -17,9 +29,26 @@ include_once '../vendor/autoload.php';
 //exit;
 
 $client = DbPool\Client\DbPoolClient::getInstance('127.0.0.1', AF_INET, 1122);
-for($i = 0; $i < 10; $i ++) {
+//事务测试
+$client->action(function() use ($client) {
+    $client->update('bairong', ['realname' => '你大爷xxxx'], [
+        'id' => 1,
+    ])->excute();
+
+    return true;
+});
+
+
+exit;
+
+
+for($i = 0; $i < 1; $i ++) {
     $res = $client->query('select * from test.bairong where id=' . ($i + 1) . ' limit 1;')->fetchAll(\PDO::FETCH_ASSOC)->excute();
-    print_r($res);
+    if(!$res) {
+        echo $client->getLastError() . "\n";
+    } else {
+        print_r($res);
+    }
 }
 sleep(5);
 
