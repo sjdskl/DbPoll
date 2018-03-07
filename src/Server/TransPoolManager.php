@@ -10,7 +10,6 @@ namespace DbPool\Server;
 
 use DbPool\Library\Log;
 
-
 class TransPoolManager extends \Threaded
 {
     protected $_threadQueue = [];
@@ -59,6 +58,11 @@ class TransPoolManager extends \Threaded
         }
 
         return false;
+    }
+
+    public function inTrans($socket)
+    {
+        return isset($this->_map[(int) $socket]);
     }
 
     public function leave()

@@ -17,6 +17,7 @@ use DbPool\Library\Threads\OnMessage;
 use DbPool\Library\Threads\Pool\ThreadsPool;
 use DbPool\Db\DbConnection;
 use DbPool\Library\Protocol\SqlProtocol;
+use function foo\func;
 
 ini_set("memory_limit", '128M');
 //或者执行 export USE_ZEND_ALLOC=0
@@ -47,7 +48,7 @@ class DbPoolServer
 
     protected $_threadQueueManager;
 
-    protected $_waitTransPool;
+    protected $_waitTransPool= [];
 
     public function __construct($address, $domain = AF_INET, $port = 1122)
     {
@@ -75,7 +76,7 @@ class DbPoolServer
         $this->_transPool = new ThreadsPool(Config::$TransPoolSize, '\DbPool\Library\Threads\ThreadWorker');
         Log::log("worker队列数量:" .$this->_transPool->workerCount());
         $this->_threadQueueManager = new TransPoolManager(Config::$TransPoolSize);
-        $this->_waitTransPool = new \SplQueue();
+//        $this->_waitTransPool = new \SplQueue();
     }
 
     protected function _close($socket)
@@ -90,9 +91,14 @@ class DbPoolServer
             Log::log("{$id}连接已断开");
             $this->_sqlProtocol->remove($id);
             //如果存在等待队列，则关闭
-            if($this->_waitTransPool->offsetExists($id)) {
-                $this->_waitTransPool->offsetUnset($id);
+            if(isset($this->_waitTransPool[$id])) {
+                $this->_waitTransPool[$id];
             }
+            //释放事务线程
+//            $this->_threadQueueManager->synchronized(function() use ($socket) {
+//                $this->_threadQueueManager->push($socket);
+//            });
+
         }
     }
 
@@ -107,7 +113,7 @@ class DbPoolServer
                 if($idx === false) {
                     //当连接还存在
                     if($socket) {
-                        $this->_waitTransPool->offsetSet((int) $socket, [$obj, $socket, $trans, $step,]);
+                        $this->_waitTransPool[(int) $socket] = [$obj, $socket, $trans, $step,];
                     }
                     Log::log('线程池不够用,放入队列中');
                     return false;
@@ -133,11 +139,11 @@ class DbPoolServer
 
     public function pushWaitTransThread()
     {
-        $c = $this->_waitTransPool->count();
+        $c = count($this->_waitTransPool);
         //将等待中的事务尝试推送到线程池中执行
         if($c) {
             for($i = 0; $i < $c; $i ++) {
-                $item = $this->_waitTransPool->shift();
+                $item = array_shift($this->_waitTransPool);
                 $f = $this->submitToThreadPool(...$item);
                 if(!$f) {
                     Log::log("暂时事务线程池还没有空余位置");
@@ -179,8 +185,9 @@ class DbPoolServer
                     $f = @socket_recv($rfd, $msg, 65535, MSG_DONTWAIT);
                     Log::log("内存占用:" . floor(memory_get_usage() / 1024 /1024) . "M");
                     if($f === false || $f === NULL || $f === 0) {
+                        $inTrans = $this->_threadQueueManager->inTrans($rfd);
                         $this->_close($rfd);
-                        $this->submitToThreadPool(new OnClose($this->_connections, $rfd, (int)$rfd, ''), $rfd);
+                        $this->submitToThreadPool(new OnClose($this->_connections, $rfd, (int)$rfd, $inTrans), $rfd, $inTrans, Config::$TransEnd);
 //                        $this->_pool->submit(new OnClose($this->_connections, $rfd, (int)$rfd, ''));
                         continue;
                     }
