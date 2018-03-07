@@ -47,6 +47,8 @@ class DbPoolServer
 
     protected $_threadQueueManager;
 
+    protected $_waitTransPool;
+
     public function __construct($address, $domain = AF_INET, $port = 1122)
     {
         $this->_socket = @socket_create($domain, SOCK_STREAM, $domain == AF_INET ? SOL_TCP:0);
@@ -73,6 +75,7 @@ class DbPoolServer
         $this->_transPool = new ThreadsPool(Config::$TransPoolSize, '\DbPool\Library\Threads\ThreadWorker');
         Log::log("worker队列数量:" .$this->_transPool->workerCount());
         $this->_threadQueueManager = new TransPoolManager(Config::$TransPoolSize);
+        $this->_waitTransPool = new \SplQueue();
     }
 
     protected function _close($socket)
@@ -86,6 +89,10 @@ class DbPoolServer
             });
             Log::log("{$id}连接已断开");
             $this->_sqlProtocol->remove($id);
+            //如果存在等待队列，则关闭
+            if($this->_waitTransPool->offsetExists($id)) {
+                $this->_waitTransPool->offsetUnset($id);
+            }
         }
     }
 
@@ -94,11 +101,16 @@ class DbPoolServer
         //事务独占一个work
         if($trans) {
             //同步执行代码
-            $this->_threadQueueManager->synchronized(function() use ($obj, $socket, $step) {
+            $this->_threadQueueManager->synchronized(function() use ($obj, $socket, $step, $trans) {
                 $idx = $this->_threadQueueManager->poop($socket);
                 Log::log("分配到[$idx]编号worker");
-                if(!$idx) {
-                    //TODO 当连接池用完时的处理
+                if($idx === false) {
+                    //当连接还存在
+                    if($socket) {
+                        $this->_waitTransPool->offsetSet((int) $socket, [$obj, $socket, $trans, $step,]);
+                    }
+                    Log::log('线程池不够用,放入队列中');
+                    return false;
                 }
                 if($step == Config::$TransStart) {
                     if(!$this->_threadQueueManager->isInited($idx)) {
@@ -112,9 +124,27 @@ class DbPoolServer
                     $this->_threadQueueManager->push($socket);
                     Log::log("将连接放回连接池:" . $idx);
                 }
+                return true;
             });
         } else {
             $this->_pool->submit($obj);
+        }
+    }
+
+    public function pushWaitTransThread()
+    {
+        $c = $this->_waitTransPool->count();
+        //将等待中的事务尝试推送到线程池中执行
+        if($c) {
+            for($i = 0; $i < $c; $i ++) {
+                $item = $this->_waitTransPool->shift();
+                $f = $this->submitToThreadPool(...$item);
+                if(!$f) {
+                    Log::log("暂时事务线程池还没有空余位置");
+                } else {
+                    Log::log("投递成功");
+                }
+            }
         }
     }
 
@@ -125,6 +155,7 @@ class DbPoolServer
             $read = array_merge($this->_connections->toArray(), [$this->_socket]);
             $write = $except = null;
             $ret = socket_select($read, $write, $except, 1, 0);
+            $this->pushWaitTransThread();
             if($ret < 1) {
                 continue;
             }

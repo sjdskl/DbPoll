@@ -18,11 +18,13 @@ include_once '../vendor/autoload.php';
 //$pool->submitTo(0, new \Threaded());exit;
 
 //$a = new SplQueue();
-//$a->shift();
-
+//
 //$a->push(1);
 //$a->push(2);
 //$a->push(3);
+//foreach($a as $item) {
+//    echo $item;
+//}
 //echo $a->count() . "---\n";
 //$a->shift();
 //echo $a->count() . "---\n";
@@ -34,6 +36,8 @@ $client->action(function() use ($client) {
     $client->update('bairong', ['realname' => '你大爷xxxx'], [
         'id' => 1,
     ])->excute();
+
+    sleep(20);
 
     return true;
 });

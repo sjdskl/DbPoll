@@ -18,7 +18,7 @@ class Config
 
     public static $PoolSize = 5;
 
-    public static $TransPoolSize = 5;
+    public static $TransPoolSize = 1;
 
     public static $TransStart = 1;
 
