@@ -43,3 +43,4 @@ $client->action(function() use ($client) {
 2.服务端可以自定义事件，onmessage，onconnect，onclose  
 3.多库配置  
 4.读写分离配置  
+5.数据库连接心跳监测，防止长时间不用的连接断开
