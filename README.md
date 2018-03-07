@@ -27,10 +27,11 @@ $server = new \DbPool\Server\DbPoolServer('127.0.0.1', AF_INET, 1122);
 
 $server->loop();
 ```
+5.支持事务,事务与普通查询分开配置
 
 
 ## TODO
-1.数据库事务  
+1.~~数据库事务~~  
 2.服务端可以自定义事件，onmessage，onconnect，onclose  
 3.多库配置  
 4.读写分离配置  
