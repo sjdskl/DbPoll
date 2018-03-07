@@ -32,24 +32,56 @@ class DbPoolServer
 
     protected $_port;
 
+    /**
+     * 网络连接
+     * @var Connections
+     */
     protected $_connections;
 
+    /**
+     * 普通数据库查询线程池
+     * @var ThreadsPool $_pool
+     */
     protected $_pool;
 
+    /**
+     * 事务线程池
+     * @var ThreadsPool $_transPool
+     */
     protected $_transPool;
 
-    protected $_used_connections;
-
-    protected $_queue;
-
+    /**
+     * 一个前置数据库连接
+     * @var DbConnection
+     */
     protected $_db;
 
+    /**
+     * 协议类
+     * @var SqlProtocol $_sqlProtocol
+     */
     protected $_sqlProtocol;
 
+    /**
+     * 事务线程池管理类，用来管理独占和线程资源竞争
+     * @var TransPoolManager $_threadQueueManager
+     */
     protected $_threadQueueManager;
 
+    /**
+     * 等待事务独占线程队列池
+     * @var array $_waitTransPool
+     */
     protected $_waitTransPool= [];
 
+    /**
+     * DbPoolServer constructor.
+     * @param $address 地址，如果是进程间通信可以是一个文件地址
+     * @param int $domain AF_INET, AF_UNIX
+     * @param int $port 端口
+     * @throws ParamsErrorException
+     * @throws \Exception
+     */
     public function __construct($address, $domain = AF_INET, $port = 1122)
     {
         $this->_socket = @socket_create($domain, SOCK_STREAM, $domain == AF_INET ? SOL_TCP:0);
@@ -78,6 +110,10 @@ class DbPoolServer
         $this->_threadQueueManager = new TransPoolManager(Config::$TransPoolSize);
     }
 
+    /**
+     * 关闭socket连接
+     * @param $socket
+     */
     protected function _close($socket)
     {
         $id = (int)$socket;
@@ -97,6 +133,13 @@ class DbPoolServer
         }
     }
 
+    /**
+     * 投递回调到线程池
+     * @param $obj 事件 onMessage, onCreate, onClose
+     * @param $socket socket id
+     * @param bool $trans 是否是事务标志
+     * @param string $step 事务步骤
+     */
     protected function submitToThreadPool($obj, $socket, $trans = false, $step = '')
     {
         //事务独占一个work
@@ -132,6 +175,9 @@ class DbPoolServer
         }
     }
 
+    /**
+     * 尝试投递事务线程池
+     */
     public function pushWaitTransThread()
     {
         $c = count($this->_waitTransPool);
@@ -149,6 +195,9 @@ class DbPoolServer
         }
     }
 
+    /**
+     * 循环接收socket连接，进行事件分发
+     */
     public function loop()
     {
         $this->_sqlProtocol = new SqlProtocol();
@@ -169,7 +218,6 @@ class DbPoolServer
                 Log::log( "new client ip:" . $ip);
                 $this->_sqlProtocol->initMsg((int)$nfd);
                 $this->submitToThreadPool(new OnConnect($this->_connections, $nfd, (int)$nfd, ''), $nfd);
-//                $this->_pool->submit(new OnConnect($this->_connections, $nfd, (int)$nfd, ''));
             }
 
             if($read) {
@@ -183,7 +231,6 @@ class DbPoolServer
                         $inTrans = $this->_threadQueueManager->inTrans($rfd);
                         $this->_close($rfd);
                         $this->submitToThreadPool(new OnClose($this->_connections, $rfd, (int)$rfd, $inTrans), $rfd, $inTrans, Config::$TransEnd);
-//                        $this->_pool->submit(new OnClose($this->_connections, $rfd, (int)$rfd, ''));
                         continue;
                     }
                     if($msg) {
@@ -197,12 +244,12 @@ class DbPoolServer
                                 $trans = true;
                             }
                             $this->submitToThreadPool(new OnMessage($this->_connections, $rfd, (int)$rfd, $row), $rfd, $trans, $row['trans']);
-//                            $this->_pool->submit(new OnMessage($this->_connections, $rfd, (int)$rfd, $row));
                         }
                     }
                 }
             }
 
+            //回收线程，防止内存泄漏
             while ($this->_pool->collect());
 
         }
