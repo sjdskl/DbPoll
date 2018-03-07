@@ -28,6 +28,14 @@ $server = new \DbPool\Server\DbPoolServer('127.0.0.1', AF_INET, 1122);
 $server->loop();
 ```
 5.支持事务,事务与普通查询分开配置
+```$xslt
+$client->action(function() use ($client) {
+    $client->update('bairong', ['realname' => '你大爷xxxx'], [
+        'id' => 1,
+    ])->excute();
+    return true;
+});
+```
 
 
 ## TODO
