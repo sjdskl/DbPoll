@@ -76,7 +76,6 @@ class DbPoolServer
         $this->_transPool = new ThreadsPool(Config::$TransPoolSize, '\DbPool\Library\Threads\ThreadWorker');
         Log::log("worker队列数量:" .$this->_transPool->workerCount());
         $this->_threadQueueManager = new TransPoolManager(Config::$TransPoolSize);
-//        $this->_waitTransPool = new \SplQueue();
     }
 
     protected function _close($socket)
@@ -94,10 +93,6 @@ class DbPoolServer
             if(isset($this->_waitTransPool[$id])) {
                 $this->_waitTransPool[$id];
             }
-            //释放事务线程
-//            $this->_threadQueueManager->synchronized(function() use ($socket) {
-//                $this->_threadQueueManager->push($socket);
-//            });
 
         }
     }
