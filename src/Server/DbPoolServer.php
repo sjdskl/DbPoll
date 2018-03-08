@@ -74,6 +74,12 @@ class DbPoolServer
     protected $_waitTransPool= [];
 
     /**
+     * 最后一次投递任务时间
+     * @var int
+     */
+    protected $_lastHeartBeatCheckTime;
+
+    /**
      * DbPoolServer constructor.
      * @param $address 地址，如果是进程间通信可以是一个文件地址
      * @param int $domain AF_INET, AF_UNIX
@@ -201,10 +207,18 @@ class DbPoolServer
     {
         $this->_sqlProtocol = new SqlProtocol();
         while(true) {
+            $now = time();
             $read = array_merge($this->_connections->toArray(), [$this->_socket]);
             $write = $except = null;
             $ret = socket_select($read, $write, $except, 1, 0);
             $this->pushWaitTransThread();
+            //投递心跳监测任务
+            if(!$this->_lastHeartBeatCheckTime || ($now - $this->_lastHeartBeatCheckTime >= Config::$HeartBeatCheckTime)) {
+                Log::log("进入监测.上次监测时间:" .  date("Y-m-d H:i:s", $this->_lastHeartBeatCheckTime) . "，当前时间:" . date('Y-m-d H:i:s', $now));
+                $this->_transPool->heartBeatCheck();
+                $this->_pool->heartBeatCheck();
+                $this->_lastHeartBeatCheckTime = $now;
+            }
             if($ret < 1) {
                 continue;
             }

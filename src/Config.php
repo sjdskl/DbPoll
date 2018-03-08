@@ -25,7 +25,13 @@ class Config
      * 心跳校测时间
      * @var int
      */
-    public static $HeartBeatTime = 900;
+    public static $HeartBeatTime = 600;
+
+    /**
+     * 心跳监测时间投递时间间隔
+     * @var int
+     */
+    public static $HeartBeatCheckTime = 60;
 
     /**
      * 普通连接池大小

@@ -8,6 +8,11 @@
 
 namespace DbPool\Library\Threads\Pool;
 
+use DbPool\Config;
+use DbPool\Library\Log;
+use DbPool\Library\Threads\ThreadWorker;
+use DbPool\Library\Threads\OnCheckDbConnection;
+
 class ThreadsPool extends \Pool
 {
     public function workerCount()
@@ -18,4 +23,24 @@ class ThreadsPool extends \Pool
 
         return 0;
     }
+
+    public function heartBeatCheck()
+    {
+        if($this->workers) {
+            $now = time();
+            /** @var ThreadWorker $worker */
+            foreach($this->workers as $idx => $worker) {
+                Log::log("最后查询时间：" . $worker->getLastQueryTime());
+                $lastQueryTime = $worker->getLastQueryTime();
+                if($now - intval(strtotime($lastQueryTime)) >= Config::$HeartBeatTime) {
+                    //发送心跳监测请求任务
+                    Log::log("投递数据库连接检查任务");
+                    $this->submitTo($idx, new OnCheckDbConnection());
+                } else {
+                    Log::log("[$idx]worker时间未到，不投递任务,last=" . $lastQueryTime . "--now=" . date('Y-m-d H:i:s'));
+                }
+            }
+        }
+    }
+
 }

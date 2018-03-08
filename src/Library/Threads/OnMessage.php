@@ -31,18 +31,28 @@ class OnMessage extends BaseThreaded
 
         $ret = json_decode(json_encode($this->_msg), true);;
         $obj = $db;
-        do {
-            $method = $ret['method'];
-            $params = (array)$ret['params'];
-            if(is_array($params)) {
-                $obj = $obj->$method(...$params);
-            } else if($params) {
-                $obj = $obj->$method($params);
-            } else {
-                $obj = $obj->$method();
-            }
-            $ret = $ret['results'];
-        } while($ret);
+        try {
+            do {
+                $method = $ret['method'];
+                $params = (array)$ret['params'];
+                if(is_array($params)) {
+                    $obj = $obj->$method(...$params);
+                } else if($params) {
+                    $obj = $obj->$method($params);
+                } else {
+                    $obj = $obj->$method();
+                }
+                if($obj === false) {
+                    $this->sendDbConnectionError($db->error());
+                    return;
+                }
+                $ret = $ret['results'];
+            } while($ret);
+        } catch (\Exception $e) {
+
+        }
+
+        $this->worker->updateLastQueryTime();
 
         Log::log("数据库ID=" . $db->id);
 

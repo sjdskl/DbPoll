@@ -19,6 +19,8 @@ class ThreadWorker extends \Worker
 
     protected $_err;
 
+    protected $_lastQueryTime;
+
     public function __construct()
     {
 
@@ -38,9 +40,36 @@ class ThreadWorker extends \Worker
         return self::$link;
     }
 
+    public function reConnect()
+    {
+        try {
+            self::$link = new DbConnection(Config::$DbInfo);
+        } catch (\Exception $e) {
+            Log::log("创建数据库连接出错:" . $e->getMessage());
+            $this->_err = $e->getMessage();
+        }
+
+        return self::$link;
+    }
+
     public function getLastError()
     {
         return $this->_err;
+    }
+
+    public function setLastError($msg)
+    {
+        $this->_err = $msg;
+    }
+
+    public function getLastQueryTime()
+    {
+        return $this->_lastQueryTime;
+    }
+
+    public function updateLastQueryTime()
+    {
+        $this->_lastQueryTime = date('Y-m-d H:i:s');
     }
 
     public function run()

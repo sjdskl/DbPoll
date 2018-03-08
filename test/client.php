@@ -37,14 +37,14 @@ $client->action(function() use ($client) {
         'id' => 1,
     ])->excute();
 
-    sleep(2);
+//    sleep(2);
 
     return false;
 });
 
-for($i = 0; $i < 100; $i ++) {
+for($i = 0; $i < 1000000; $i ++) {
     $res = $client->query('select * from test.bairong where id=' . ($i + 1) . ' limit 1;')->fetchAll(\PDO::FETCH_ASSOC)->excute();
-    if(!$res) {
+    if($res === false) {
         echo $client->getLastError() . "\n";
     } else {
         print_r($res);

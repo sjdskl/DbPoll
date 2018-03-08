@@ -18,6 +18,7 @@ class OnClose extends BaseThreaded
 
         if($this->_msg === true) {
             $this->worker->getConnection()->getPdo()->rollBack();
+            $this->worker->updateLastQueryTime();
             Log::log("未正确提交事务，回滚:");
         }
 
