@@ -80,6 +80,24 @@ class DbPoolServer
     protected $_lastHeartBeatCheckTime;
 
     /**
+     * 连接接收处理类
+     * @var class
+     */
+    public $onConnect = 'OnConnect';
+
+    /**
+     * 消息处理类
+     * @var class
+     */
+    public $onMessage = 'OnMessage';
+
+    /**
+     * 连接关闭处理类
+     * @var class
+     */
+    public $onClose = 'OnClose';
+
+    /**
      * DbPoolServer constructor.
      * @param $address 地址，如果是进程间通信可以是一个文件地址
      * @param int $domain AF_INET, AF_UNIX
@@ -113,6 +131,33 @@ class DbPoolServer
         $this->_transPool = new ThreadsPool(Config::$TransPoolSize, '\DbPool\Library\Threads\ThreadWorker');
         Log::log("worker队列数量:" .$this->_transPool->workerCount());
         $this->_threadQueueManager = new TransPoolManager(Config::$TransPoolSize);
+    }
+
+    /**
+     * 设置自定义关闭处理类
+     * @param $className
+     */
+    public function setOnClose($className)
+    {
+        $this->onClose = $className;
+    }
+
+    /**
+     * 设置自定义连接处理类
+     * @param $className
+     */
+    public function setOnConnect($className)
+    {
+        $this->onConnect = $className;
+    }
+
+    /**
+     * 设置自定义消息处理类
+     * @param $className
+     */
+    public function setOnMessage($className)
+    {
+        $this->onMessage = $className;
     }
 
     /**
