@@ -170,14 +170,17 @@ class DbPoolServer
         if(is_resource($socket)) {
             //同步关闭
             $this->_connections->synchronized(function() use ($id, $socket) {
-                unset($this->_connections->connections[$id]);
-                @socket_close($socket);
+                if(isset($this->_connections->connections[$id])) {
+                    unset($this->_connections->connections[$id]);
+                    @socket_close($socket);
+                }
             });
-            Log::log("{$id}连接已断开");
+            Log::log("[{$id}]连接已断开");
+            //将此链接的等待执行操作删除
             $this->_sqlProtocol->remove($id);
-            //如果存在等待队列，则关闭
+            //如果存在等待队列，则删除等待队列列的任务
             if(isset($this->_waitTransPool[$id])) {
-                $this->_waitTransPool[$id];
+                unset($this->_waitTransPool[$id]);
             }
 
         }

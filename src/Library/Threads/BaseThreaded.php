@@ -45,15 +45,17 @@ class BaseThreaded extends \Threaded
         }
 
         if($f === false) {
-            //同步代码
+            Log::log("[{$this->_id}]发送消息失败");
+//            //其实这里并不是必须进行关闭操作，因为当连接断开时会调用onClose操作来释放资源.
+//            //同步代码
             $this->_connections->synchronized(function () {
                 Log::log("[{$this->_id}]执行同步代码，关闭连接");
                 if(isset($this->_connections->connections[$this->_id])) {
                     unset($this->_connections->connections[$this->_id]);
+                    @socket_close($this->_socket);
                 } else {
                     Log::log("socket={$this->_id}已经被关闭");
                 }
-                @socket_close($this->_socket);
             });
         }
 

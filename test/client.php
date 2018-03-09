@@ -37,20 +37,18 @@ $client->action(function() use ($client) {
         'id' => 1,
     ])->excute();
 
-//    sleep(2);
-
     return false;
 });
 
-for($i = 0; $i < 1; $i ++) {
-    $res = $client->query('select * from test.bairong where id=' . ($i + 1) . ' limit 1;')->fetchAll(\PDO::FETCH_ASSOC)->excute();
-    if($res === false) {
-        echo $client->getLastError() . "\n";
-    } else {
-        print_r($res);
-    }
-}
-sleep(5);
+//for($i = 0; $i < 1; $i ++) {
+//    $res = $client->query('select * from test.bairong where id=' . ($i + 1) . ' limit 1;')->fetchAll(\PDO::FETCH_ASSOC)->excute();
+//    if($res === false) {
+//        echo $client->getLastError() . "\n";
+//    } else {
+//        print_r($res);
+//    }
+//}
+//sleep(5);
 
 $res = $client->select('bairong', ['id', 'realname', 'phone'], ['id[<=]' => 10])->excute();
 print_r($res);
