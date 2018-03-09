@@ -42,10 +42,28 @@ class OnMessage extends BaseThreaded
                 } else {
                     $obj = $obj->$method();
                 }
+
+                //查询失败异常处理
                 if($obj === false) {
-                    $this->sendDbConnectionError($db->error());
+                    $error_info = $db->error();
+                    Log::log("执行出错，error=" . $error_info);
+                    //如果是服务器断开连接，则尝试重新连接服务器
+                    if(isset($error_info[1]) && $error_info[1] = 2006) {
+                        //断线重新连接
+                        $db = $this->worker->reConnect();
+                        $data = $db->query('select 1;');
+                        if($data === false) {
+                            $error_info = $db->error();
+                            Log::log("重连服务器失败，msg=" . $error_info);
+                        } else {
+                            //如果重连成功，则重新执行
+                            continue;
+                        }
+                    }
+                    $this->sendDbConnectionError($error_info);
                     return;
                 }
+
                 $ret = $ret['results'];
             } while($ret);
         } catch (\Exception $e) {
