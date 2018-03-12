@@ -10,6 +10,7 @@ namespace DbPool\Server;
 
 use DbPool\Config;
 use DbPool\Exception\ParamsErrorException;
+use DbPool\Library\Encrypt\RSA;
 use DbPool\Library\Log;
 use DbPool\Library\Threads\OnClose;
 use DbPool\Library\Threads\OnConnect;

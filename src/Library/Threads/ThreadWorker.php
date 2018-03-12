@@ -10,6 +10,7 @@ namespace DbPool\Library\Threads;
 
 use DbPool\Db\DbConnection;
 use DbPool\Config;
+use DbPool\Library\Encrypt\RSA;
 use DbPool\Library\Log;
 
 
@@ -70,6 +71,11 @@ class ThreadWorker extends \Worker
     public function updateLastQueryTime()
     {
         $this->_lastQueryTime = date('Y-m-d H:i:s');
+    }
+
+    public function getRsa()
+    {
+        return $this->_rsa;
     }
 
     public function run()

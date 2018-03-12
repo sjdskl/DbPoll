@@ -33,8 +33,18 @@ $client->action(function() use ($client) {
     $client->update('bairong', ['realname' => '你大爷xxxx'], [
         'id' => 1,
     ])->excute();
+    //返回true代表commit，false代表rollback，这个和medoo一样
     return true;
 });
+```
+6.支持可配置的心跳监测
+```$xslt
+public static $HeartBeatTime = 600;
+public static $HeartBeatCheckTime = 60;
+```
+7.支持自定义消息事件，方便重写消息处理方式
+```$xslt
+可方便的自己实现OnConnect，OnMessage，OnClose事件处理类,只需要自己实现run方法并继承BaseThread
 ```
 
 
@@ -45,3 +55,4 @@ $client->action(function() use ($client) {
 4.读写分离配置  
 5.~~数据库连接心跳监测，防止长时间不用的连接断开~~  
 6.~~数据库连接或者重连失败时的异常处理~~
+7.数据传输加密

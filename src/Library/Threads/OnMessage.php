@@ -9,7 +9,6 @@
 namespace DbPool\Library\Threads;
 
 use DbPool\Library\Log;
-use Medoo\Medoo;
 
 class OnMessage extends BaseThreaded
 {

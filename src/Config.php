@@ -34,6 +34,21 @@ class Config
     public static $HeartBeatCheckTime = 60;
 
     /**
+     * 是否加密传输数据
+     * @var bool
+     */
+    public static $Encrypt = true;
+
+    /**
+     * 公私钥地址
+     * @var string
+     */
+    public static $ServerPrivateKey = '/Users/kailishen/PhpstormProjects/DbPoll/src/Keys/server_private.pem';
+    public static $ServerPublicKey = '/Users/kailishen/PhpstormProjects/DbPoll/src/Keys/server_public.pem';
+    public static $ClientPrivateKey = '/Users/kailishen/PhpstormProjects/DbPoll/src/Keys/client_private.pem';
+    public static $ClientPublicKey = '/Users/kailishen/PhpstormProjects/DbPoll/src/Keys/client_public.pem';
+
+    /**
      * 普通连接池大小
      * @var int
      */

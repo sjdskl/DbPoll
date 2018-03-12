@@ -7,6 +7,18 @@
  */
 include_once '../vendor/autoload.php';
 
+//$a = new \DbPool\Library\Encrypt\RSA(\DbPool\Config::$ServerPrivateKey, \DbPool\Config::$ClientPublicKey);
+//$b =  new \DbPool\Library\Encrypt\RSA(\DbPool\Config::$ClientPrivateKey, \DbPool\Config::$ServerPublicKey);
+//
+//$c = $b->rsaEncrypt('111');
+//\DbPool\Library\Log::log("c=" . $c);
+//$d = $a->rsaDecrypt($c);
+//\DbPool\Library\Log::log('d=' . $d);
+//
+//exit;
+
+
+
 //$pool1 = new \Pool(5);
 //$pool = new \Pool(5);
 //
@@ -31,23 +43,24 @@ include_once '../vendor/autoload.php';
 //exit;
 
 $client = DbPool\Client\DbPoolClient::getInstance('127.0.0.1', AF_INET, 1122);
+
 //事务测试
 $client->action(function() use ($client) {
-    $client->update('bairong', ['realname' => '你大爷xxxx'], [
+    $client->update('bairong', ['realname' => '你大爷222'], [
         'id' => 1,
     ])->excute();
 
-    return false;
+    return true;
 });
 
-//for($i = 0; $i < 1; $i ++) {
-//    $res = $client->query('select * from test.bairong where id=' . ($i + 1) . ' limit 1;')->fetchAll(\PDO::FETCH_ASSOC)->excute();
-//    if($res === false) {
-//        echo $client->getLastError() . "\n";
-//    } else {
-//        print_r($res);
-//    }
-//}
+for($i = 0; $i < 1; $i ++) {
+    $res = $client->query('select * from test.bairong where id=' . ($i + 1) . ' limit 1;')->fetchAll(\PDO::FETCH_ASSOC)->excute();
+    if($res === false) {
+        echo $client->getLastError() . "\n";
+    } else {
+        print_r($res);
+    }
+}
 //sleep(5);
 
 $res = $client->select('bairong', ['id', 'realname', 'phone'], ['id[<=]' => 10])->excute();

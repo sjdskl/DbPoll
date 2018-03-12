@@ -7,6 +7,7 @@
  */
 namespace DbPool\Client;
 
+use DbPool\Library\Encrypt\RSA;
 use DbPool\Library\Log;
 use DbPool\Exception\ParamsErrorException;
 use DbPool\Config;
@@ -27,6 +28,8 @@ class DbPoolClient
 
     const DELIMITER = '\r\n\r\n';
 
+    private $_rsa;
+
     private function __construct($address, $domain = AF_INET, $port = 1122)
     {
         $this->_socket = socket_create($domain, SOCK_STREAM, SOL_TCP);
@@ -42,6 +45,7 @@ class DbPoolClient
                 throw new \Exception('绑定失败');
             }
         }
+        $this->_rsa = new RSA(Config::$ClientPrivateKey, Config::$ServerPublicKey);
     }
 
     private function __clone()
@@ -64,7 +68,7 @@ class DbPoolClient
             return false;
         }
         $msg = json_encode($this->_stack);
-        $msg .= self::DELIMITER;
+        $msg = $this->_rsa->rsaEncrypt($msg) . self::DELIMITER;
         $f = socket_write($this->_socket, $msg, strlen($msg));
         //TODO 重试次数
         $this->_stack = [];
@@ -73,6 +77,8 @@ class DbPoolClient
             Log::log('发送失败:' . socket_strerror(socket_last_error($this->_socket)));
         }
         $data = socket_read($this->_socket, 65535);
+        $data = trim($data, '\r\n\r\n');
+        $data = $this->_rsa->rsaDecrypt($data);
         $data = json_decode($data, true);
         if($data) {
             if($data['code'] != Config::SUCCESS_CODE) {

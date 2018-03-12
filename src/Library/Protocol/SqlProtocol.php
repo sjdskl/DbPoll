@@ -8,6 +8,8 @@
 namespace DbPool\Library\Protocol;
 
 use DbPool\Library\Log;
+use DbPool\Config;
+use DbPool\Library\Encrypt\RSA;
 
 class SqlProtocol
 {
@@ -19,9 +21,12 @@ class SqlProtocol
 
     protected $_msg = [];
 
+    /** @var RSA $_rsa */
+    protected $_rsa;
+
     public function __construct()
     {
-
+        $this->_rsa = new RSA(Config::$ServerPrivateKey, Config::$ClientPublicKey);
     }
 
     public function initMsg($id)
@@ -39,13 +44,19 @@ class SqlProtocol
         $t = explode(self::DELIMITER, $this->_msg[$id]);
         if(count($t) > 1) {
             for($i = 0; $i < count($t) - 1; $i ++) {
+                $t[$i] = $this->_rsa->rsaDecrypt($t[$i]);
                 $this->_msgQueue[$id]->push($t[$i]);
             }
             //边界条件检查，如果正好是最后一个数据
-            $json = json_decode($t[$i], true);
-            if($json !== NULL && $json !== false) {
-                $this->_msgQueue[$id]->push($t[$i]);
-                $this->_msg[$id] = '';
+            $t[$i] = $this->_rsa->rsaDecrypt($t[$i]);
+            if($t[$i]) {
+                $json = json_decode($t[$i], true);
+                if($json !== NULL && $json !== false) {
+                    $this->_msgQueue[$id]->push($t[$i]);
+                    $this->_msg[$id] = '';
+                } else {
+                    $this->_msg[$id] = $t[$i];
+                }
             } else {
                 $this->_msg[$id] = $t[$i];
             }

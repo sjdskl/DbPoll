@@ -7,9 +7,11 @@
  */
 
 namespace DbPool\Library\Threads;
+use DbPool\Library\Encrypt\RSA;
 use DbPool\Server\Connections;
 use DbPool\Library\Log;
 use DbPool\Config;
+use DbPool\Library\Protocol\SqlProtocol;
 
 class BaseThreaded extends \Threaded
 {
@@ -32,11 +34,13 @@ class BaseThreaded extends \Threaded
             'msg' => $msg,
             'code' => $code,
         ];
-        $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
+        $msg = json_encode($msg);
         if(!isset($this->_connections->connections[$this->_id])) {
             Log::log("socket={$this->_id}已经被关闭");
             return false;
         }
+        $rsa = new RSA(Config::$ServerPrivateKey, Config::$ClientPublicKey);
+        $msg = $rsa->rsaEncrypt($msg) . SqlProtocol::DELIMITER;
         $f = @socket_write($this->_socket, $msg, strlen($msg));
         if($f === false || $f === NULL) {
             Log::log("Thread:[{$this->_id}]发送消息时连接已经断开");
