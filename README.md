@@ -46,6 +46,8 @@ public static $HeartBeatCheckTime = 60;
 ```$xslt
 可方便的自己实现OnConnect，OnMessage，OnClose事件处理类,只需要自己实现run方法并继承BaseThread
 ```
+8.支持RSA和AES加密，可自行选择.性能上AES好几倍
+
 
 
 ## TODO
@@ -55,4 +57,4 @@ public static $HeartBeatCheckTime = 60;
 4.读写分离配置  
 5.~~数据库连接心跳监测，防止长时间不用的连接断开~~  
 6.~~数据库连接或者重连失败时的异常处理~~
-7.数据传输加密
+7.~~数据传输加密~~
