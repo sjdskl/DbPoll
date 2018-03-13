@@ -28,7 +28,6 @@
             "Library\\": "tests/Library/"
         }
     },
-    "minimum-stability": "0.1",
     "extra": {
         "branch-alias": {
             "dev-master": "0.01-dev"
