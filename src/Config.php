@@ -39,7 +39,7 @@ class Config
      */
     public static $Encrypt = true;
 
-    public static $EncryptType = 'RSA';//RSA
+    public static $EncryptType = 'AES';//RSA
 
     /**
      * 公私钥地址
