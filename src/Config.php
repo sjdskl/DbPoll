@@ -39,10 +39,14 @@ class Config
      */
     public static $Encrypt = true;
 
+    /**
+     * 加密类型
+     * @var string
+     */
     public static $EncryptType = 'AES';//RSA
 
     /**
-     * 公私钥地址
+     * RSA加密公私钥地址
      * @var string
      */
     public static $ServerPrivateKey = '/Users/kailishen/PhpstormProjects/DbPoll/src/Keys/server_private.pem';
