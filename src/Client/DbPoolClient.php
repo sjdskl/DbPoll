@@ -76,8 +76,14 @@ class DbPoolClient
         if(!$f) {
             Log::log('发送失败:' . socket_strerror(socket_last_error($this->_socket)));
         }
-        $data = socket_read($this->_socket, 65535);
-        $data = trim($data, '\r\n\r\n');
+        $data = '';
+        while($tmp = socket_read($this->_socket, 65535)) {
+            $data .= $tmp;
+            if(stripos($tmp, self::DELIMITER) !== false) {
+                break;
+            }
+        }
+        $data = trim($data, self::DELIMITER);
         $data = $this->_rsa->decrypt($data);
         $data = json_decode($data, true);
         if($data) {
