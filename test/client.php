@@ -7,8 +7,36 @@
  */
 include_once '../vendor/autoload.php';
 
+
+//$plaintext = "message to be encrypted";
+//$cipher = "AES-256-CTR";
+//$key = '112233';
+//$tag = '123';
+//if (in_array($cipher, openssl_get_cipher_methods()))
+//{
+//    $ivlen = openssl_cipher_iv_length($cipher);
+//    $iv = openssl_random_pseudo_bytes($ivlen);
+//    echo base64_encode($iv);exit;
+//    $ciphertext = base64_encode(openssl_encrypt($plaintext, $cipher, $key, $options=0, $iv));
+//    \DbPool\Library\Log::log(($ciphertext));
+//    //store $cipher, $iv, and $tag for decryption later
+//    $original_plaintext = openssl_decrypt(base64_decode($ciphertext), $cipher, $key, $options=0, $iv);
+//    echo $original_plaintext."\n";
+//}
+//
+//exit;
+
 //$a = new \DbPool\Library\Encrypt\RSA(\DbPool\Config::$ServerPrivateKey, \DbPool\Config::$ClientPublicKey);
 //$b =  new \DbPool\Library\Encrypt\RSA(\DbPool\Config::$ClientPrivateKey, \DbPool\Config::$ServerPublicKey);
+//
+//$c = $a->aesEncrypt("asdfasdfasdf");
+//\DbPool\Library\Log::log($c);
+//
+//$d = $b->aesDecrypt($c);
+//
+//\DbPool\Library\Log::log($d);
+//exit;
+
 //
 //$c = $b->rsaEncrypt('111');
 //\DbPool\Library\Log::log("c=" . $c);

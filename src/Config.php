@@ -37,7 +37,9 @@ class Config
      * 是否加密传输数据
      * @var bool
      */
-    public static $Encrypt = false;
+    public static $Encrypt = true;
+
+    public static $EncryptType = 'RSA';//RSA
 
     /**
      * 公私钥地址

@@ -40,7 +40,7 @@ class BaseThreaded extends \Threaded
             return false;
         }
         $rsa = new RSA(Config::$ServerPrivateKey, Config::$ClientPublicKey);
-        $msg = $rsa->rsaEncrypt($msg) . SqlProtocol::DELIMITER;
+        $msg = $rsa->encrypt($msg) . SqlProtocol::DELIMITER;
         $f = @socket_write($this->_socket, $msg, strlen($msg));
         if($f === false || $f === NULL) {
             Log::log("Thread:[{$this->_id}]发送消息时连接已经断开");

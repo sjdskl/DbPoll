@@ -44,11 +44,11 @@ class SqlProtocol
         $t = explode(self::DELIMITER, $this->_msg[$id]);
         if(count($t) > 1) {
             for($i = 0; $i < count($t) - 1; $i ++) {
-                $t[$i] = $this->_rsa->rsaDecrypt($t[$i]);
+                $t[$i] = $this->_rsa->decrypt($t[$i]);
                 $this->_msgQueue[$id]->push($t[$i]);
             }
             //边界条件检查，如果正好是最后一个数据
-            $t[$i] = $this->_rsa->rsaDecrypt($t[$i]);
+            $t[$i] = $this->_rsa->decrypt($t[$i]);
             if($t[$i]) {
                 $json = json_decode($t[$i], true);
                 if($json !== NULL && $json !== false) {

@@ -68,7 +68,7 @@ class DbPoolClient
             return false;
         }
         $msg = json_encode($this->_stack);
-        $msg = $this->_rsa->rsaEncrypt($msg) . self::DELIMITER;
+        $msg = $this->_rsa->encrypt($msg) . self::DELIMITER;
         $f = socket_write($this->_socket, $msg, strlen($msg));
         //TODO 重试次数
         $this->_stack = [];
@@ -78,7 +78,7 @@ class DbPoolClient
         }
         $data = socket_read($this->_socket, 65535);
         $data = trim($data, '\r\n\r\n');
-        $data = $this->_rsa->rsaDecrypt($data);
+        $data = $this->_rsa->decrypt($data);
         $data = json_decode($data, true);
         if($data) {
             if($data['code'] != Config::SUCCESS_CODE) {

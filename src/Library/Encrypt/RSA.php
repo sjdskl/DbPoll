@@ -57,4 +57,37 @@ class RSA
         }
         return $crypto;
     }
+
+    public function aesEncrypt($data,$key = '&3lsd_&%$', $cipher = 'AES-256-CTR', $iv = "1A6bfyMuCvrE4SE08C1G4g==")
+    {
+        if(Config::$Encrypt) {
+            return base64_encode(openssl_encrypt($data, $cipher, $key, $options=0, base64_decode($iv)));
+        } else {
+            return base64_encode($data);
+        }
+    }
+
+    public function aesDecrypt($data,$key = '&3lsd_&%$',  $cipher = 'AES-256-CTR', $iv = "1A6bfyMuCvrE4SE08C1G4g==")
+    {
+        if(Config::$Encrypt) {
+            return openssl_decrypt(base64_decode($data), $cipher, $key, $options = 0, base64_decode($iv));
+        } else {
+            return base64_decode($data);
+        }
+    }
+
+    public function encrypt($data)
+    {
+        $method = strtolower(Config::$EncryptType) . "Encrypt";
+        Log::log("调用[{$method}]");
+        return $this->$method($data);
+    }
+
+    public function decrypt($data)
+    {
+        $method = strtolower(Config::$EncryptType) . "Decrypt";
+        Log::log("调用[{$method}]");
+        return $this->$method($data);
+    }
+
 }
