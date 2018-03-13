@@ -13,7 +13,7 @@
     "require": {
         "php": ">=7.0",
         "symfony/console": "^3.2",
-        "catfan/Medoo": "^V1.55"
+        "catfan/Medoo": "^V1.5.5"
     },
     "require-dev":{
         "phpunit/phpunit": "^4.0"
@@ -28,7 +28,7 @@
             "Library\\": "tests/Library/"
         }
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "0.1",
     "extra": {
         "branch-alias": {
             "dev-master": "0.01-dev"
