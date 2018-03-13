@@ -313,6 +313,7 @@ class DbPoolServer
 
             //回收线程，防止内存泄漏
             while ($this->_pool->collect());
+            while ($this->_transPool->collect());
 
         }
 
