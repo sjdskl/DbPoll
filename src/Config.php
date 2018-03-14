@@ -14,6 +14,21 @@ class Config
 
     const ERROR_CODE = 2001;
 
+
+    /**
+     * http 监听端口
+     * @var int
+     */
+    public static $HttpPort = 1123;
+
+    public static $HttpBindAddress = '127.0.0.1';
+
+    /**
+     * 连接池服务端口
+     * @var int
+     */
+    public static $ServerPort = 1122;
+
     /**
      * 日志类型
      * console 输出

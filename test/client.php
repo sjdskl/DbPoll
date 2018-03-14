@@ -81,7 +81,12 @@ $client->action(function() use ($client) {
     return true;
 });
 
-for($i = 0; $i < 10000; $i ++) {
+//sleep(5);
+
+$res = $client->select('bairong', ['id', 'realname', 'phone'], ['id[<=]' => 10000])->excute();
+print_r($res);
+
+for($i = 0; $i < 10; $i ++) {
     $res = $client->query('select * from test.bairong where id=' . ($i + 1) . ' limit 1;')->fetchAll(\PDO::FETCH_ASSOC)->excute();
     if($res === false) {
         echo $client->getLastError() . "\n";
@@ -89,12 +94,6 @@ for($i = 0; $i < 10000; $i ++) {
         print_r($res);
     }
 }
-//sleep(5);
-
-$res = $client->select('bairong', ['id', 'realname', 'phone'], ['id[<=]' => 10])->excute();
-print_r($res);
-
-
 
 
 

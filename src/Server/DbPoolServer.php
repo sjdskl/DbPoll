@@ -10,14 +10,16 @@ namespace DbPool\Server;
 
 use DbPool\Config;
 use DbPool\Exception\ParamsErrorException;
-use DbPool\Library\Encrypt\RSA;
 use DbPool\Library\Log;
+use DbPool\Library\Threads\HttpClient;
 use DbPool\Library\Threads\OnClose;
 use DbPool\Library\Threads\OnConnect;
 use DbPool\Library\Threads\OnMessage;
 use DbPool\Library\Threads\Pool\ThreadsPool;
 use DbPool\Db\DbConnection;
 use DbPool\Library\Protocol\SqlProtocol;
+use DbPool\Library\Protocol\HttpProtocol;
+use DbPool\Server\ServerStatus;
 
 ini_set("memory_limit", '128M');
 //或者执行 export USE_ZEND_ALLOC=0
@@ -49,6 +51,17 @@ class DbPoolServer
      * @var ThreadsPool $_transPool
      */
     protected $_transPool;
+
+    /**
+     * http服务线程池
+     * @var ThreadsPool $_httpPool
+     */
+    protected $_httpPool;
+
+    /**
+     * @var \DbPool\Server\ServerStatus
+     */
+    protected $_serverStatus;
 
     /**
      * 一个前置数据库连接
@@ -106,12 +119,12 @@ class DbPoolServer
      * @throws ParamsErrorException
      * @throws \Exception
      */
-    public function __construct($address, $domain = AF_INET, $port = 1122)
+    public function __construct($address, $domain = AF_INET, $port = '')
     {
         $this->_socket = @socket_create($domain, SOCK_STREAM, $domain == AF_INET ? SOL_TCP:0);
         if($domain == AF_INET) {
             if(!$port) {
-                throw new ParamsErrorException("参数错误, 缺少端口");
+                $port = Config::$ServerPort;
             }
             if(!socket_bind($this->_socket, $address, $port)) {
                 throw new \Exception('绑定失败');
@@ -132,6 +145,11 @@ class DbPoolServer
         $this->_transPool = new ThreadsPool(Config::$TransPoolSize, '\DbPool\Library\Threads\ThreadWorker');
         Log::log("worker队列数量:" .$this->_transPool->workerCount());
         $this->_threadQueueManager = new TransPoolManager(Config::$TransPoolSize);
+
+        $this->_httpPool = new ThreadsPool(1);
+        HttpProtocol::$methods;
+        $this->_serverStatus = new ServerStatus();
+        $this->_httpPool->submit(new HttpClient($this->_serverStatus));
     }
 
     /**
@@ -260,6 +278,7 @@ class DbPoolServer
             $read = array_merge($this->_connections->toArray(), [$this->_socket]);
             $write = $except = null;
             $ret = socket_select($read, $write, $except, 1, 0);
+            $this->_serverStatus->setServerStatus($this->_pool, $this->_transPool);
             $this->pushWaitTransThread();
             //投递心跳监测任务
             if(!$this->_lastHeartBeatCheckTime || ($now - $this->_lastHeartBeatCheckTime >= Config::$HeartBeatCheckTime)) {

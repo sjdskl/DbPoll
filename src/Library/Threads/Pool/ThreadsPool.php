@@ -43,4 +43,25 @@ class ThreadsPool extends \Pool
         }
     }
 
+    public function getPoolInfo()
+    {
+        $result = [
+            'used_count' => 0,
+            'max_count'   => $this->size,
+            'last_use_index' => $this->last,
+            'works' => [],
+        ];
+        if($this->workers) {
+            $result['used_count'] = count($this->workers);
+            foreach($this->workers as $idx => $worker) {
+                $result[$idx] = [
+                    'status' => $worker->getStacked() > 0 ? true:false,
+                    'queue' => $worker->getStacked(),
+                ];
+            }
+        }
+
+        return $result;
+    }
+
 }
