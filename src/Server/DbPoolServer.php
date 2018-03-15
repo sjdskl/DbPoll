@@ -19,7 +19,7 @@ use DbPool\Library\Threads\Pool\ThreadsPool;
 use DbPool\Db\DbConnection;
 use DbPool\Library\Protocol\SqlProtocol;
 use DbPool\Library\Protocol\HttpProtocol;
-use DbPool\Server\ServerStatus;
+use DbPool\Library\TableRender;
 
 ini_set("memory_limit", '128M');
 //或者执行 export USE_ZEND_ALLOC=0
@@ -149,7 +149,7 @@ class DbPoolServer
         $this->_httpPool = new ThreadsPool(1);
         HttpProtocol::$methods;
         $this->_serverStatus = new ServerStatus();
-        $this->_httpPool->submit(new HttpClient($this->_serverStatus));
+        $this->_httpPool->submit(new HttpClient($this->_serverStatus, new TableRender()));
     }
 
     /**

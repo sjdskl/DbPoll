@@ -21,12 +21,15 @@ class HttpClient extends \Threaded
 
     protected $_connections;
 
+    protected $_table;
+
     /** @var ServerStatus $_serverStatus */
     protected $_serverStatus;
 
-    public function __construct($serverStatus)
+    public function __construct($serverStatus, $table)
     {
         $this->_serverStatus = $serverStatus;
+        $this->_table = $table;
     }
 
     public function _close($socket)
@@ -95,7 +98,7 @@ class HttpClient extends \Threaded
 
                         ob_start();
                         $t = $this->_serverStatus->getServerStatus();
-                        print_r($t);
+                        echo $this->_table->render($t);
                         $data = ob_get_contents();
                         ob_end_clean();
 
